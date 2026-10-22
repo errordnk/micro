@@ -10,8 +10,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
-github.com/errordnk/tcell/v2 v2.0.14-0.20261022124501-6425f7cea86e h1:nUmaemXQ/eEd+2GTT29CeXRPz2zJIk0N2uGXigmYsus=
-github.com/errordnk/tcell/v2 v2.0.14-0.20261022124501-6425f7cea86e/go.mod h1:ixpjICpoGp83FZVoLYFJPBwCAslHeTnvgPdhJVPLyy0=
+github.com/errordnk/tcell/v2 v2.0.14-0.20261022165548-5a920c8d4762 h1:bqxuyNL7AkiZ9UfcKy8snbn5HBk51Cm6MTSKYTJQ5RA=
+github.com/errordnk/tcell/v2 v2.0.14-0.20261022165548-5a920c8d4762/go.mod h1:5oQmlEI9UAdHFNcIBrqtWHatgHt0/AodzveFKJWhca0=
 github.com/gdamore/encoding v1.0.0 h1:+7OoQ1Bc6eTm5niUzBa0Ctsh6JbMW6Ra+YNuAtDBdko=
 github.com/gdamore/encoding v1.0.0/go.mod h1:alR0ol34c49FCSBLjhosxzcPHQbf2trDkoo5dl+VrEg=
 github.com/go-errors/errors v1.0.1 h1:LUHzmkK3GUKUrL/1gfBUxAHzcev3apQlezX/+O7ma6w=
