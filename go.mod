@@ -38,3 +38,5 @@ replace github.com/kballard/go-shellquote => github.com/micro-editor/go-shellquo
 replace layeh.com/gopher-luar v1.0.11 => github.com/layeh/gopher-luar v1.0.11
 
 go 1.19
+
+replace github.com/micro-editor/tcell/v2 => github.com/errordnk/tcell/v2 v2.0.14-0.20261022121608-7f6d89d95bbd
