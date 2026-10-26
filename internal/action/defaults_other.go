@@ -26,6 +26,8 @@ var bufdefaults = map[string]string{
 	"ShiftEnd":       "SelectToEndOfLine",
 	"CtrlUp":         "CursorStart",
 	"CtrlDown":       "CursorEnd",
+	"CtrlShiftPageUp":   "BlockSelectPageUp",
+	"CtrlShiftPageDown": "BlockSelectPageDown",
 	"CtrlShiftUp":    "SelectToStart",
 	"CtrlShiftDown":  "SelectToEnd",
 	"Alt-{":          "ParagraphPrevious",

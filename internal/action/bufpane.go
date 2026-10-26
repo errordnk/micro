@@ -150,6 +150,9 @@ func BufMapEvent(k Event, action string) {
 	bufAction := func(h *BufPane, te *tcell.EventMouse) bool {
 		for i, a := range actionfns {
 			var success bool
+			if isMoveAction(names[i]) {
+				h.collapseBlock()
+			}
 			if !blockKeepingActions[names[i]] {
 				h.block = nil
 				h.blockCursors = false
@@ -252,6 +255,7 @@ type BufPane struct {
 	block        *blockSel
 	blockCursors bool
 	collapseTo   *buffer.Loc
+	collapseVX   int
 
 	splitID uint64
 	tab     *Tab
@@ -465,7 +469,12 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 		}
 		h.DoKeyEvent(re)
 	case *tcell.EventPaste:
-		h.paste(e.Text())
+		// bracketed paste of a block copied in this editor goes in as a column
+		if isBlockClip(e.Text()) {
+			h.pasteBlock()
+		} else {
+			h.paste(e.Text())
+		}
 		h.Relocate()
 	case *tcell.EventKey:
 		ke := keyEvent(e)
@@ -854,6 +863,8 @@ var BufKeyActions = map[string]BufKeyAction{
 	"BlockSelectRight":          (*BufPane).BlockSelectRight,
 	"BlockSelectUp":             (*BufPane).BlockSelectUp,
 	"BlockSelectDown":           (*BufPane).BlockSelectDown,
+	"BlockSelectPageUp":         (*BufPane).BlockSelectPageUp,
+	"BlockSelectPageDown":       (*BufPane).BlockSelectPageDown,
 	"SpawnMultiCursor":          (*BufPane).SpawnMultiCursor,
 	"SpawnMultiCursorUp":        (*BufPane).SpawnMultiCursorUp,
 	"SpawnMultiCursorDown":      (*BufPane).SpawnMultiCursorDown,
@@ -886,9 +897,12 @@ var blockKeepingActions = map[string]bool{
 	"BlockSelectRight": true,
 	"BlockSelectUp":    true,
 	"BlockSelectDown":  true,
+	"BlockSelectPageUp":   true,
+	"BlockSelectPageDown": true,
 	"Copy":             true,
 	"Cut":              true,
 	"Paste":            true,
+	"Deselect":         true,
 }
 
 // MultiActions is a list of actions that should be executed multiple

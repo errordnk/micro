@@ -332,6 +332,8 @@ BlockSelectLeft
 BlockSelectRight
 BlockSelectUp
 BlockSelectDown
+BlockSelectPageUp
+BlockSelectPageDown
 SpawnMultiCursor
 SpawnMultiCursorUp
 SpawnMultiCursorDown

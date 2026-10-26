@@ -1904,6 +1904,24 @@ func (h *BufPane) Escape() bool {
 
 // Deselect deselects on the current cursor
 func (h *BufPane) Deselect() bool {
+	if h.Buf.NumCursors() > 1 {
+		selected := false
+		for _, c := range h.Buf.GetCursors() {
+			selected = selected || c.HasSelection()
+		}
+		// a column selection goes away as a whole
+		if h.blockCursors || selected {
+			if h.blockCursors {
+				h.Buf.ClearCursors()
+				h.Cursor = h.Buf.GetActiveCursor()
+			} else {
+				h.Buf.DeselectCursors()
+			}
+			h.block, h.blockCursors = nil, false
+			h.Relocate()
+			return true
+		}
+	}
 	if !h.Cursor.HasSelection() {
 		return false
 	}

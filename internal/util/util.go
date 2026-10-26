@@ -93,8 +93,16 @@ func init() {
 		fmt.Println("Invalid version: ", Version, err)
 	}
 
-	_, wt := os.LookupEnv("WT_SESSION")
-	if runtime.GOOS == "windows" && !wt {
+	// Only the legacy Windows console needs a fake cursor. Modern terminals
+	// (Windows Terminal, Som, ...) have a real one, which keeps the user's
+	// cursor shape and blinking; they are recognized by these variables.
+	modern := false
+	for _, env := range []string{"WT_SESSION", "COLORTERM", "TERM_PROGRAM"} {
+		if _, ok := os.LookupEnv(env); ok {
+			modern = true
+		}
+	}
+	if runtime.GOOS == "windows" && !modern {
 		FakeCursor = true
 	}
 	Stdout = new(bytes.Buffer)

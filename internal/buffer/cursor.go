@@ -51,6 +51,30 @@ type Cursor struct {
 	// vxLoc, so any movement elsewhere implicitly resets it.
 	vx    int
 	vxLoc Loc
+
+	// Visual column range [from, to) of a block selection on this cursor's
+	// line. It may extend past the end of a short line (virtual space), which
+	// the selection itself cannot express. Valid only while the cursor and
+	// its selection are unchanged.
+	vsel    [2]int
+	vselLoc Loc
+	vselSel [2]Loc
+	vselOn  bool
+}
+
+// SetVirtualSel records the visual column range of a block selection
+func (c *Cursor) SetVirtualSel(from, to int) {
+	c.vsel = [2]int{from, to}
+	c.vselLoc, c.vselSel, c.vselOn = c.Loc, c.CurSelection, true
+}
+
+// VirtualSel returns the visual column range of the block selection on this
+// cursor's line, if the cursor still has one
+func (c *Cursor) VirtualSel() (from, to int, ok bool) {
+	if !c.vselOn || c.vselLoc != c.Loc || c.vselSel != c.CurSelection {
+		return 0, 0, false
+	}
+	return c.vsel[0], c.vsel[1], true
 }
 
 // VirtualEnabled returns whether the cursor may go beyond the end of a line

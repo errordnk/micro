@@ -835,18 +835,38 @@ func (w *BufWindow) displayBuffer() {
 			screen.SetContent(i+w.X, vloc.Y+w.Y, ' ', nil, curStyle)
 		}
 
-		if w.active && !softwrap {
-			for _, c := range cursors {
-				if vx := c.VirtualX(); vx > 0 && c.Y == bloc.Y && vloc.X+vx < maxWidth {
-					w.showCursor(w.X+vloc.X+vx, w.Y+vloc.Y, c.Num == 0)
-				}
-			}
-		}
+		eolX := vloc.X
 
 		if vloc.X != maxWidth {
 			// Display newline within a selection
 			drawrune, drawstyle, preservebg := getRuneStyle(' ', config.DefStyle, 0, totalwidth, true)
 			draw(drawrune, nil, drawstyle, true, true, preservebg)
+		}
+
+		if !softwrap {
+			lineW := util.StringWidth(b.LineBytes(bloc.Y), util.CharacterCount(b.LineBytes(bloc.Y)), tabsize)
+			selStyle := config.DefStyle.Reverse(true)
+			if s, ok := config.Colorscheme["selection"]; ok {
+				selStyle = s
+			}
+			for _, c := range cursors {
+				if c.Y != bloc.Y {
+					continue
+				}
+				// block selection extending into virtual space
+				if from, to, ok := c.VirtualSel(); ok {
+					for col := util.Max(from, lineW); col < to; col++ {
+						if x := eolX + col - lineW; x >= w.gutterOffset && x < maxWidth {
+							screen.SetContent(w.X+x, w.Y+vloc.Y, ' ', nil, selStyle)
+						}
+					}
+				}
+				// only the active cursor is shown in virtual space, so that
+				// a block selection does not draw a cursor on every line
+				if vx := c.VirtualX(); w.active && vx > 0 && c == b.GetActiveCursor() && eolX+vx < maxWidth {
+					w.showCursor(w.X+eolX+vx, w.Y+vloc.Y, true)
+				}
+			}
 		}
 
 		bloc.X = w.StartCol
