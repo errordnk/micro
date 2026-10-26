@@ -328,6 +328,10 @@ PlayMacro
 Suspend (Unix only)
 ScrollUp
 ScrollDown
+BlockSelectLeft
+BlockSelectRight
+BlockSelectUp
+BlockSelectDown
 SpawnMultiCursor
 SpawnMultiCursorUp
 SpawnMultiCursorDown
@@ -544,10 +548,10 @@ conventions for text editing defaults.
     "AltShiftLeft":   "SelectWordLeft", (Mac)
     "CtrlLeft":       "StartOfText", (Mac)
     "CtrlRight":      "EndOfLine", (Mac)
-    "AltShiftLeft":   "SelectToStartOfTextToggle",
+    "AltShiftLeft":   "BlockSelectLeft",
     "CtrlShiftLeft":  "SelectToStartOfTextToggle", (Mac)
     "ShiftHome":      "SelectToStartOfTextToggle",
-    "AltShiftRight":  "SelectToEndOfLine",
+    "AltShiftRight":  "BlockSelectRight",
     "CtrlShiftRight": "SelectToEndOfLine", (Mac)
     "ShiftEnd":       "SelectToEndOfLine",
     "CtrlUp":         "CursorStart",
@@ -630,8 +634,10 @@ conventions for text editing defaults.
 
     // Multi-cursor bindings
     "Alt-n":        "SpawnMultiCursor",
-    "AltShiftUp":   "SpawnMultiCursorUp",
-    "AltShiftDown": "SpawnMultiCursorDown",
+    "AltShiftUp":   "BlockSelectUp",
+    "AltShiftDown": "BlockSelectDown",
+    "CtrlAltUp":    "SpawnMultiCursorUp",
+    "CtrlAltDown":  "SpawnMultiCursorDown",
     "Alt-m":        "SpawnMultiCursorSelect",
     "Alt-p":        "RemoveMultiCursor",
     "Alt-c":        "RemoveAllMultiCursors",

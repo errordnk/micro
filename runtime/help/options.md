@@ -407,6 +407,15 @@ Here are the available options:
 
     default value: `true`
 
+* `virtualspace`: allow the cursor to move beyond the end of a line, like
+   "cursor beyond end of line" in FAR Manager. `Right` at the end of a line (and
+   `Up`/`Down` from a longer line, or a click past the end) puts the cursor in
+   empty virtual space; typing or pasting there pads the line with spaces.
+   Column (block) selections use it too. Not used with `softwrap`.
+   Set it to `false` in `settings.json` to get the classic behavior.
+
+    default value: `true`
+
 * `softwrap`: wrap lines that are too long to fit on the screen.
 
     default value: `false`
@@ -622,6 +631,7 @@ so that you can see what the formatting should look like.
     "tabsize": 4,
     "tabstospaces": false,
     "useprimary": true,
+    "virtualspace": true,
     "wordwrap": false,
     "xterm": false
 }

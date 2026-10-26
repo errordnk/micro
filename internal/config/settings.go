@@ -104,6 +104,7 @@ var defaultCommonSettings = map[string]any{
 	"tabstospaces":    false,
 	"truecolor":       "auto",
 	"useprimary":      true,
+	"virtualspace":    true,
 	"wordwrap":        false,
 }
 

@@ -278,6 +278,12 @@
             "type": "boolean",
             "default": true
         },
+        "virtualspace": {
+            "description": "Whether the cursor can move beyond the end of a line (virtual space)
+https://github.com/zyedidia/micro/blob/master/runtime/help/options.md#options",
+            "type": "boolean",
+            "default": true
+        },
         "softwrap": {
             "description": "Whether to wrap long lines\nhttps://github.com/zyedidia/micro/blob/master/runtime/help/options.md#options",
             "type": "boolean",

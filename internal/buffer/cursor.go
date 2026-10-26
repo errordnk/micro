@@ -1,6 +1,8 @@
 package buffer
 
 import (
+	"strings"
+
 	"github.com/zyedidia/micro/v2/internal/clipboard"
 	"github.com/zyedidia/micro/v2/internal/util"
 )
@@ -43,6 +45,49 @@ type Cursor struct {
 
 	// Which cursor index is this (for multiple cursors)
 	Num int
+
+	// Virtual space: number of columns the cursor is beyond the end of its line
+	// (see the virtualspace option). Only valid while the cursor is still at
+	// vxLoc, so any movement elsewhere implicitly resets it.
+	vx    int
+	vxLoc Loc
+}
+
+// VirtualEnabled returns whether the cursor may go beyond the end of a line
+func (c *Cursor) VirtualEnabled() bool {
+	v, ok := c.buf.Settings["virtualspace"].(bool)
+	return ok && v && !c.buf.Settings["softwrap"].(bool) &&
+		c.buf.Type != BTInfo && c.buf.Type != BTRaw
+}
+
+// VirtualX returns how many columns the cursor is beyond the end of its line
+func (c *Cursor) VirtualX() int {
+	if c.vx <= 0 || c.vxLoc != c.Loc || !c.VirtualEnabled() ||
+		c.X != util.CharacterCount(c.buf.LineBytes(c.Y)) {
+		return 0
+	}
+	return c.vx
+}
+
+// SetVirtualX puts the cursor n columns beyond the end of its line
+func (c *Cursor) SetVirtualX(n int) {
+	if n < 0 || !c.VirtualEnabled() {
+		n = 0
+	}
+	c.vx, c.vxLoc = n, c.Loc
+}
+
+// ClearVirtual puts the cursor back on the text
+func (c *Cursor) ClearVirtual() {
+	c.vx = 0
+}
+
+// Materialize turns the virtual space before the cursor into real spaces
+func (c *Cursor) Materialize() {
+	if n := c.VirtualX(); n > 0 {
+		c.ClearVirtual()
+		c.buf.Insert(c.Loc, strings.Repeat(" ", n))
+	}
 }
 
 func NewCursor(b *Buffer, l Loc) *Cursor {
@@ -67,6 +112,7 @@ func (c *Cursor) Buf() *Buffer {
 // Goto puts the cursor at the given cursor's location and gives
 // the current cursor its selection too
 func (c *Cursor) Goto(b Cursor) {
+	c.ClearVirtual()
 	c.X, c.Y = b.X, b.Y
 	c.OrigSelection, c.CurSelection = b.OrigSelection, b.CurSelection
 	c.StoreVisualX()
@@ -75,6 +121,7 @@ func (c *Cursor) Goto(b Cursor) {
 // GotoLoc puts the cursor at the given cursor's location and gives
 // the current cursor its selection too
 func (c *Cursor) GotoLoc(l Loc) {
+	c.ClearVirtual()
 	c.X, c.Y = l.X, l.Y
 	c.StoreVisualX()
 }
@@ -106,6 +153,7 @@ func (c *Cursor) GetCharPosInLine(b []byte, visualPos int) int {
 
 // Start moves the cursor to the start of the line it is on
 func (c *Cursor) Start() {
+	c.ClearVirtual()
 	c.X = 0
 	c.StoreVisualX()
 }
@@ -137,6 +185,7 @@ func (c *Cursor) IsStartOfText() bool {
 
 // End moves the cursor to the end of the line it is on
 func (c *Cursor) End() {
+	c.ClearVirtual()
 	c.X = util.CharacterCount(c.buf.LineBytes(c.Y))
 	c.StoreVisualX()
 }
@@ -266,6 +315,16 @@ func (c *Cursor) UpN(amount int) {
 	}
 
 	c.Y = proposedY
+
+	// going from a longer line to a shorter one: stay in the same column
+	if c.VirtualEnabled() && c.X == util.CharacterCount(bytes) {
+		tabsize := int(c.buf.Settings["tabsize"].(float64))
+		if w := util.StringWidth(bytes, c.X, tabsize); c.LastVisualX > w {
+			c.SetVirtualX(c.LastVisualX - w)
+			return
+		}
+	}
+	c.ClearVirtual()
 }
 
 // DownN moves the cursor down N lines (if possible)
@@ -311,6 +370,28 @@ func (c *Cursor) Right() {
 		c.Start()
 	}
 	c.StoreVisualX()
+}
+
+// MoveLeft is Left for interactive cursor movement: it first walks back
+// through virtual space
+func (c *Cursor) MoveLeft() {
+	if n := c.VirtualX(); n > 0 {
+		c.SetVirtualX(n - 1)
+		c.StoreVisualX()
+		return
+	}
+	c.Left()
+}
+
+// MoveRight is Right for interactive cursor movement: at the end of a line it
+// goes into virtual space instead of wrapping to the next line
+func (c *Cursor) MoveRight() {
+	if c.VirtualEnabled() && c.X == util.CharacterCount(c.buf.LineBytes(c.Y)) {
+		c.SetVirtualX(c.VirtualX() + 1)
+		c.StoreVisualX()
+		return
+	}
+	c.Right()
 }
 
 // Relocate makes sure that the cursor is inside the bounds
@@ -622,6 +703,6 @@ func (c *Cursor) RuneUnder(x int) rune {
 }
 
 func (c *Cursor) StoreVisualX() {
-	c.LastVisualX = c.GetVisualX(false)
+	c.LastVisualX = c.GetVisualX(false) + c.VirtualX()
 	c.LastWrappedVisualX = c.GetVisualX(true)
 }

@@ -245,7 +245,7 @@ func (w *BufWindow) Relocate() bool {
 
 	// horizontal relocation (scrolling)
 	if !b.Settings["softwrap"].(bool) {
-		cx := activeC.GetVisualX(false)
+		cx := activeC.GetVisualX(false) + activeC.VirtualX()
 		rw := runewidth.RuneWidth(activeC.RuneUnder(activeC.X))
 		if rw == 0 {
 			rw = 1 // tab or newline
@@ -277,6 +277,16 @@ func (w *BufWindow) LocFromVisual(svloc buffer.Loc) buffer.Loc {
 		VisualX: vx + w.StartCol,
 	}
 	return w.LocFromVLoc(vloc)
+}
+
+// VisualXFromScreen returns the visual column in the buffer line that is
+// displayed at the given screen column (it may lie beyond the end of the line)
+func (w *BufWindow) VisualXFromScreen(sx int) int {
+	vx := sx - w.X - w.gutterOffset
+	if vx < 0 {
+		vx = 0
+	}
+	return vx + w.StartCol
 }
 
 func (w *BufWindow) drawGutter(vloc *buffer.Loc, bloc *buffer.Loc) {
@@ -679,7 +689,7 @@ func (w *BufWindow) displayBuffer() {
 
 			if showcursor {
 				for _, c := range cursors {
-					if c.X == bloc.X && c.Y == bloc.Y && !c.HasSelection() {
+					if c.X == bloc.X && c.Y == bloc.Y && !c.HasSelection() && c.VirtualX() == 0 {
 						w.showCursor(w.X+vloc.X, w.Y+vloc.Y, c.Num == 0)
 					}
 				}
@@ -823,6 +833,14 @@ func (w *BufWindow) displayBuffer() {
 				}
 			}
 			screen.SetContent(i+w.X, vloc.Y+w.Y, ' ', nil, curStyle)
+		}
+
+		if w.active && !softwrap {
+			for _, c := range cursors {
+				if vx := c.VirtualX(); vx > 0 && c.Y == bloc.Y && vloc.X+vx < maxWidth {
+					w.showCursor(w.X+vloc.X+vx, w.Y+vloc.Y, c.Num == 0)
+				}
+			}
 		}
 
 		if vloc.X != maxWidth {

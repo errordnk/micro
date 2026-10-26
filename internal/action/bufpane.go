@@ -150,6 +150,10 @@ func BufMapEvent(k Event, action string) {
 	bufAction := func(h *BufPane, te *tcell.EventMouse) bool {
 		for i, a := range actionfns {
 			var success bool
+			if !blockKeepingActions[names[i]] {
+				h.block = nil
+				h.blockCursors = false
+			}
 			if _, ok := MultiActions[names[i]]; ok {
 				success = true
 				for _, c := range h.Buf.GetCursors() {
@@ -243,6 +247,11 @@ type BufPane struct {
 	// Should the current multiple cursor selection search based on word or
 	// based on selection (false for selection, true for word)
 	multiWord bool
+
+	// Column (block) selection state, see block.go
+	block        *blockSel
+	blockCursors bool
+	collapseTo   *buffer.Loc
 
 	splitID uint64
 	tab     *Tab
@@ -500,6 +509,7 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 		}
 	}
 	h.Buf.MergeCursors()
+	h.finishBlock()
 
 	if h.IsActive() {
 		// Display any gutter messages for this line
@@ -630,6 +640,8 @@ func (h *BufPane) DoRuneInsert(r rune) {
 		if c.HasSelection() {
 			c.DeleteSelection()
 			c.ResetSelection()
+		} else {
+			c.Materialize()
 		}
 
 		if h.Buf.OverwriteMode {
@@ -838,6 +850,10 @@ var BufKeyActions = map[string]BufKeyAction{
 	"Suspend":                   (*BufPane).Suspend,
 	"ScrollUp":                  (*BufPane).ScrollUpAction,
 	"ScrollDown":                (*BufPane).ScrollDownAction,
+	"BlockSelectLeft":           (*BufPane).BlockSelectLeft,
+	"BlockSelectRight":          (*BufPane).BlockSelectRight,
+	"BlockSelectUp":             (*BufPane).BlockSelectUp,
+	"BlockSelectDown":           (*BufPane).BlockSelectDown,
 	"SpawnMultiCursor":          (*BufPane).SpawnMultiCursor,
 	"SpawnMultiCursorUp":        (*BufPane).SpawnMultiCursorUp,
 	"SpawnMultiCursorDown":      (*BufPane).SpawnMultiCursorDown,
@@ -862,6 +878,17 @@ var BufMouseActions = map[string]BufMouseAction{
 	"MouseDrag":        (*BufPane).MouseDrag,
 	"MouseRelease":     (*BufPane).MouseRelease,
 	"MouseMultiCursor": (*BufPane).MouseMultiCursor,
+}
+
+// blockKeepingActions are the actions that keep a column selection alive
+var blockKeepingActions = map[string]bool{
+	"BlockSelectLeft":  true,
+	"BlockSelectRight": true,
+	"BlockSelectUp":    true,
+	"BlockSelectDown":  true,
+	"Copy":             true,
+	"Cut":              true,
+	"Paste":            true,
 }
 
 // MultiActions is a list of actions that should be executed multiple

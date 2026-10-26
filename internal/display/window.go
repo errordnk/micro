@@ -34,4 +34,5 @@ type BWindow interface {
 	SoftWrap
 	SetBuffer(b *buffer.Buffer)
 	BufView() View
+	VisualXFromScreen(sx int) int
 }

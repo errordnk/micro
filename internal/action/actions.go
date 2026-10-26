@@ -102,6 +102,7 @@ func (h *BufPane) MousePress(e *tcell.EventMouse) bool {
 		h.Cursor.CurSelection[1] = h.Cursor.Loc
 	}
 
+	h.mouseVirtual(mx)
 	h.Cursor.StoreVisualX()
 	h.lastLoc = mouseLoc
 	h.Relocate()
@@ -124,6 +125,7 @@ func (h *BufPane) MouseDrag(e *tcell.EventMouse) bool {
 		h.Cursor.SelectTo(h.Cursor.Loc)
 	}
 
+	h.mouseVirtual(mx)
 	h.Cursor.StoreVisualX()
 	h.Relocate()
 	return true
@@ -288,10 +290,10 @@ func (h *BufPane) CursorLeft() bool {
 					h.Cursor.Left()
 				}
 			} else {
-				h.Cursor.Left()
+				h.Cursor.MoveLeft()
 			}
 		} else {
-			h.Cursor.Left()
+			h.Cursor.MoveLeft()
 		}
 	}
 	h.Relocate()
@@ -313,10 +315,10 @@ func (h *BufPane) CursorRight() bool {
 					h.Cursor.Right()
 				}
 			} else {
-				h.Cursor.Right()
+				h.Cursor.MoveRight()
 			}
 		} else {
-			h.Cursor.Right()
+			h.Cursor.MoveRight()
 		}
 	}
 
@@ -724,6 +726,9 @@ func (h *BufPane) Backspace() bool {
 	if h.Cursor.HasSelection() {
 		h.Cursor.DeleteSelection()
 		h.Cursor.ResetSelection()
+	} else if n := h.Cursor.VirtualX(); n > 0 {
+		h.Cursor.SetVirtualX(n - 1)
+		h.Cursor.StoreVisualX()
 	} else if h.Cursor.Loc.GreaterThan(h.Buf.Start()) {
 		// We have to do something a bit hacky here because we want to
 		// delete the line by first moving left and then deleting backwards
@@ -945,6 +950,7 @@ func (h *BufPane) CycleAutocompleteBack() bool {
 // InsertTab inserts a tab or spaces
 func (h *BufPane) InsertTab() bool {
 	b := h.Buf
+	h.Cursor.Materialize()
 	indent := b.IndentString(util.IntOpt(b.Settings["tabsize"]))
 	tabBytes := len(indent)
 	bytesUntilIndent := tabBytes - (h.Cursor.GetVisualX(false) % tabBytes)
@@ -1344,6 +1350,12 @@ func (h *BufPane) selectLines() int {
 
 // Copy the selection to the system clipboard
 func (h *BufPane) Copy() bool {
+	if h.blockCursors && h.Buf.NumCursors() > 1 {
+		if h.Cursor.Num != 0 {
+			return true
+		}
+		return h.blockCopy(false)
+	}
 	if !h.Cursor.HasSelection() {
 		return false
 	}
@@ -1384,6 +1396,12 @@ func (h *BufPane) CopyLine() bool {
 
 // Cut the selection to the system clipboard
 func (h *BufPane) Cut() bool {
+	if h.blockCursors && h.Buf.NumCursors() > 1 {
+		if h.Cursor.Num != 0 {
+			return true
+		}
+		return h.blockCopy(true)
+	}
 	if !h.Cursor.HasSelection() {
 		return false
 	}
@@ -1588,6 +1606,10 @@ func (h *BufPane) MoveLinesDown() bool {
 // Paste whatever is in the system clipboard into the buffer
 // Delete and paste if the user has a selection
 func (h *BufPane) Paste() bool {
+	if h.tryBlockPaste() {
+		h.Relocate()
+		return true
+	}
 	clip, err := clipboard.ReadMulti(clipboard.ClipboardReg, h.Cursor.Num, h.Buf.NumCursors())
 	if err != nil {
 		InfoBar.Error(err)
@@ -1625,6 +1647,8 @@ func (h *BufPane) paste(clip string) {
 	if h.Cursor.HasSelection() {
 		h.Cursor.DeleteSelection()
 		h.Cursor.ResetSelection()
+	} else {
+		h.Cursor.Materialize()
 	}
 
 	h.Buf.Insert(h.Cursor.Loc, clip)
