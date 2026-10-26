@@ -10,6 +10,7 @@ import (
 	luar "layeh.com/gopher-luar"
 
 	runewidth "github.com/mattn/go-runewidth"
+	"github.com/micro-editor/tcell/v2"
 	lua "github.com/yuin/gopher-lua"
 	"github.com/zyedidia/micro/v2/internal/buffer"
 	"github.com/zyedidia/micro/v2/internal/config"
@@ -103,6 +104,39 @@ func (s *StatusLine) FindOpt(opt string) any {
 	return "null"
 }
 
+// displayMessage draws the editor's message (what used to go to the info bar)
+// centered in the status line of the active window.
+func (s *StatusLine) displayMessage() {
+	msg, isErr, ok := statusMessage()
+	if !ok || !s.win.IsActive() {
+		return
+	}
+	style := config.DefStyle.Reverse(true)
+	if st, ok := config.Colorscheme["statusline"]; ok {
+		style = st
+	}
+	if isErr {
+		style = config.DefStyle.Foreground(tcell.ColorBlack).Background(tcell.ColorMaroon)
+		if st, ok := config.Colorscheme["error-message"]; ok {
+			style = st
+		}
+	}
+
+	text := " " + strings.Join(strings.Fields(msg), " ") + " "
+	width := runewidth.StringWidth(text)
+	for width > s.win.Width && len(text) > 0 {
+		r := []rune(text)
+		text = string(r[:len(r)-1])
+		width = runewidth.StringWidth(text)
+	}
+	y := s.win.Height + s.win.Y - 1
+	x := (s.win.Width - width) / 2
+	for _, r := range text {
+		screen.SetContent(s.win.X+x, y, r, nil, style)
+		x += runewidth.RuneWidth(r)
+	}
+}
+
 var formatParser = regexp.MustCompile(`\$\(.+?\)`)
 
 // Display draws the statusline to the screen
@@ -189,6 +223,8 @@ func (s *StatusLine) Display() {
 
 	leftLen := util.StringWidth(leftText, util.CharacterCount(leftText), 1)
 	rightLen := util.StringWidth(rightText, util.CharacterCount(rightText), 1)
+
+	defer s.displayMessage()
 
 	for x := 0; x < s.win.Width; x++ {
 		if x < leftLen {

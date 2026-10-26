@@ -118,7 +118,7 @@ var DefaultGlobalOnlySettings = map[string]any{
 	"divreverse":     true,
 	"fakecursor":     false,
 	"helpsplit":      "hsplit",
-	"infobar":        true,
+	"infobar":        false,
 	"keymenu":        false,
 	"mouse":          true,
 	"multiopen":      "tab",

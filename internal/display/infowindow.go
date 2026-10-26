@@ -32,6 +32,15 @@ func (i *InfoWindow) errStyle() tcell.Style {
 func (i *InfoWindow) defStyle() tcell.Style {
 	defStyle := config.DefStyle
 
+	// without a reserved info bar prompts replace the status line, so they
+	// look like it
+	if on, _ := config.GlobalSettings["infobar"].(bool); !on && i.HasPrompt {
+		if s, ok := config.Colorscheme["statusline"]; ok {
+			return s
+		}
+		return config.DefStyle.Reverse(true)
+	}
+
 	if _, ok := config.Colorscheme["message"]; ok {
 		defStyle = config.Colorscheme["message"]
 	}
@@ -39,7 +48,31 @@ func (i *InfoWindow) defStyle() tcell.Style {
 	return defStyle
 }
 
+// infoBuf is the buffer of the info bar; the statusline shows its messages.
+var infoBuf *info.InfoBuf
+
+// statusMessage returns the message (not a prompt) that should be shown
+// centered in the status line, and whether it is an error. Without a
+// statusline the message stays in the info bar.
+func statusMessage() (msg string, isErr bool, ok bool) {
+	if infoBuf == nil {
+		return "", false, false
+	}
+	// yes/no questions have no text to edit, so they are shown like messages
+	if infoBuf.HasPrompt && !infoBuf.HasYN {
+		return "", false, false
+	}
+	if !infoBuf.HasPrompt && !(infoBuf.HasMessage || infoBuf.HasError) {
+		return "", false, false
+	}
+	if sl, _ := config.GetGlobalOption("statusline").(bool); !sl {
+		return "", false, false
+	}
+	return infoBuf.Msg, infoBuf.HasError, true
+}
+
 func NewInfoWindow(b *info.InfoBuf) *InfoWindow {
+	infoBuf = b
 	iw := new(InfoWindow)
 	iw.InfoBuf = b
 	iw.View = new(View)
@@ -239,6 +272,9 @@ func (i *InfoWindow) Display() {
 
 		if !i.HasPrompt && !i.HasMessage && !i.HasError {
 			return
+		}
+		if _, _, shown := statusMessage(); shown {
+			return // shown in the status line instead
 		}
 		i.Clear()
 		style := i.defStyle()

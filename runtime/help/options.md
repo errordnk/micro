@@ -208,10 +208,13 @@ Here are the available options:
 
     default value: ` ` (space)
 
-* `infobar`: enables the line at the bottom of the editor where messages are
-   printed. This option is `global only`.
+* `infobar`: reserves a separate line at the bottom of the editor for the
+   command line and messages. When it is off (the default) no line is
+   reserved: messages and yes/no questions are shown centered in the status
+   line, and prompts (command bar, search, ...) temporarily replace the status
+   line and it comes back when they are done. This option is `global only`.
 
-    default value: `true`
+    default value: `false`
 
 * `keepautoindent`: when using autoindent, whitespace is added for you. This
    option determines if when you move to the next line without any insertions
@@ -582,7 +585,7 @@ so that you can see what the formatting should look like.
     "ignorecase": true,
     "incsearch": true,
     "indentchar": " ",
-    "infobar": true,
+    "infobar": false,
     "initlua": true,
     "keepautoindent": false,
     "keymenu": false,

@@ -155,9 +155,9 @@
             "default": " "
         },
         "infobar": {
-            "description": "Whether to enable a line at the bottom where messages are printed\nhttps://github.com/zyedidia/micro/blob/master/runtime/help/options.md#options",
+            "description": "Whether to reserve a separate line at the bottom for the command line and messages (off: the status line is used)\nhttps://github.com/zyedidia/micro/blob/master/runtime/help/options.md#options",
             "type": "boolean",
-            "default": true
+            "default": false
         },
         "keepautoindent": {
             "description": "Whether add a whitespace while using autoindent\nhttps://github.com/zyedidia/micro/blob/master/runtime/help/options.md#options",
