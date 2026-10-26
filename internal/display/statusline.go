@@ -48,6 +48,21 @@ var statusInfo = map[string]func(*buffer.Buffer) string{
 		}
 		return ""
 	},
+	// eol shows the line ending of files that do not use plain "\n"
+	"eol": func(b *buffer.Buffer) string {
+		// only a file that already contains a line break counts: for an empty or
+		// one-line file the format is just the default for new files
+		if b.LinesNum() < 2 {
+			return ""
+		}
+		switch b.Endings {
+		case buffer.FFDos:
+			return " [win]"
+		case buffer.FFMac:
+			return " [mac]"
+		}
+		return ""
+	},
 	"overwrite": func(b *buffer.Buffer) string {
 		if b.OverwriteMode && !b.Type.Readonly {
 			return "[ovwr] "
@@ -205,8 +220,16 @@ func (s *StatusLine) Display() {
 
 	leftText := []byte(s.win.Buf.Settings["statusformatl"].(string))
 	leftText = formatParser.ReplaceAllFunc(leftText, formatter)
-	rightText := []byte(s.win.Buf.Settings["statusformatr"].(string))
-	rightText = formatParser.ReplaceAllFunc(rightText, formatter)
+	rightFormat := s.win.Buf.Settings["statusformatr"].(string)
+	rightText := formatParser.ReplaceAllFunc([]byte(rightFormat), formatter)
+
+	// The line ending marker ([win] or [mac]; nothing for plain "\n") is always
+	// shown at the right edge, unless the format places it itself with $(eol).
+	if !strings.Contains(rightFormat, "$(eol)") {
+		if eol := strings.TrimSpace(statusInfo["eol"](s.win.Buf)); eol != "" {
+			rightText = append(bytes.TrimRight(rightText, " "), []byte(" "+eol+" ")...)
+		}
+	}
 
 	statusLineStyle := config.DefStyle.Reverse(true)
 	if s.win.IsActive() {

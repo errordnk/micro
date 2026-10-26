@@ -42,7 +42,7 @@ var optionValidators = map[string]optionValidator{
 // a list of settings with pre-defined choices
 var OptionChoices = map[string][]string{
 	"clipboard":       {"internal", "external", "terminal"},
-	"fileformat":      {"unix", "dos"},
+	"fileformat":      {"unix", "dos", "mac"},
 	"helpsplit":       {"hsplit", "vsplit"},
 	"matchbracestyle": {"underline", "highlight"},
 	"multiopen":       {"tab", "hsplit", "vsplit"},

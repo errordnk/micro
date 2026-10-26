@@ -90,6 +90,8 @@ func (b *Buffer) DoSetOptionNative(option string, nativeValue any) {
 			b.Endings = FFUnix
 		case "dos":
 			b.Endings = FFDos
+		case "mac":
+			b.Endings = FFMac
 		}
 		b.setModified()
 	} else if option == "syntax" {

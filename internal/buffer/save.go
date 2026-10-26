@@ -146,6 +146,8 @@ func (wf wrappedFile) Write(b *SharedBuffer) (int, error) {
 	var eol []byte
 	if b.Endings == FFDos {
 		eol = []byte{'\r', '\n'}
+	} else if b.Endings == FFMac {
+		eol = []byte{'\r'}
 	} else {
 		eol = []byte{'\n'}
 	}

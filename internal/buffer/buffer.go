@@ -170,6 +170,8 @@ func (b *SharedBuffer) calcHash(out *[md5.Size]byte) {
 		for _, l := range b.lines[1:] {
 			if b.Endings == FFDos {
 				h.Write([]byte{'\r', '\n'})
+			} else if b.Endings == FFMac {
+				h.Write([]byte{'\r'})
 			} else {
 				h.Write([]byte{'\n'})
 			}
@@ -416,6 +418,8 @@ func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command)
 					ff = FFUnix
 				case "dos":
 					ff = FFDos
+				case "mac":
+					ff = FFMac
 				}
 			} else {
 				// in case of autodetection treat as locally set
@@ -439,6 +443,8 @@ func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command)
 		b.Settings["fileformat"] = "unix"
 	case FFDos:
 		b.Settings["fileformat"] = "dos"
+	case FFMac:
+		b.Settings["fileformat"] = "mac"
 	}
 
 	b.UpdateRules()
@@ -709,7 +715,7 @@ func (b *Buffer) Size() int {
 			if b.Endings == FFDos {
 				nb++ // carriage return
 			}
-			nb++ // newline
+			nb++ // newline (or the carriage return of a classic mac file)
 		}
 	}
 	return nb

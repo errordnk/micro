@@ -114,3 +114,46 @@ func TestPromptReplacesStatusLine(t *testing.T) {
 	iw.Display()
 	assert.Contains(t, rowText(9, 40), "STATUS")
 }
+
+func TestEolStatusInfo(t *testing.T) {
+	for _, tc := range []struct{ text, want string }{
+		{"a\nb", ""},
+		{"a\r\nb", " [win]"},
+		{"a\rb", " [mac]"},
+	} {
+		b := buffer.NewBufferFromString(tc.text, "", buffer.BTDefault)
+		assert.Equal(t, tc.want, statusInfo["eol"](b), tc.text)
+	}
+}
+
+func TestEolMarkerAtTheRightEdge(t *testing.T) {
+	ulua.L = lua.NewState()
+	config.InitRuntimeFiles(false)
+	config.InitGlobalSettings()
+	sim, err := screen.InitSimScreen()
+	assert.NoError(t, err)
+	sim.SetSize(40, 10)
+
+	for _, tc := range []struct{ text, want string }{
+		{"a\nb", "Ln 1 "},
+		{"a\r\nb", "Ln 1 [win] "},
+		{"a\rb", "Ln 1 [mac] "},
+	} {
+		b := buffer.NewBufferFromString(tc.text, "", buffer.BTDefault)
+		b.Settings["statusformatl"] = "L"
+		b.Settings["statusformatr"] = "Ln 1 " // no $(eol) in the settings
+		w := NewBufWindow(0, 0, 40, 9, b)
+		w.SetActive(true)
+		w.Display()
+		row := rowText(8, 40)
+		assert.True(t, strings.HasSuffix(row, tc.want), "%q: %q", tc.text, row)
+	}
+}
+
+func TestEolHiddenWithoutLineBreaks(t *testing.T) {
+	for _, text := range []string{"", "abc"} {
+		b := buffer.NewBufferFromString(text, "", buffer.BTDefault)
+		b.Endings = buffer.FFDos // e.g. the default for new files on Windows
+		assert.Equal(t, "", statusInfo["eol"](b), "%q", text)
+	}
+}

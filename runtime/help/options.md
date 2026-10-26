@@ -150,7 +150,7 @@ Here are the available options:
 * `fileformat`: this determines what kind of line endings micro will use for
    the file. Unix line endings are just `\n` (linefeed) whereas dos line
    endings are `\r\n` (carriage return + linefeed). The two possible values for
-   this option are `unix` and `dos`. The fileformat will be automatically
+   this option are `unix`, `dos` and `mac` (classic Mac, `\r`). A `[win]` or `[mac]` marker is shown at the right edge of the status line for such files. The fileformat will be automatically
    detected (when you open an existing file) and displayed on the statusline,
    but this option is useful if you would like to change the line endings or if
    you are starting a new file. Changing this option while editing a file will

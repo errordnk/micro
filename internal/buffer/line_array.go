@@ -64,6 +64,7 @@ const (
 	FFAuto = 0 // Autodetect format
 	FFUnix = 1 // LF line endings (unix style '\n')
 	FFDos  = 2 // CRLF line endings (dos style '\r\n')
+	FFMac  = 3 // CR line endings (classic mac style '\r')
 )
 
 type FileFormat byte
@@ -103,6 +104,18 @@ func NewLineArray(size uint64, endings FileFormat, reader io.Reader) *LineArray 
 
 	br := bufio.NewReader(reader)
 	var loaded int
+
+	// Classic Mac files have only '\r' as line separator. They are read by
+	// turning each '\r' into '\n' and remembering the format for saving.
+	if endings == FFAuto || endings == FFMac {
+		peek, _ := br.Peek(64 * 1024)
+		if endings == FFMac || (bytes.IndexByte(peek, '\r') >= 0 && bytes.IndexByte(peek, '\n') < 0) {
+			if data, err := io.ReadAll(br); err == nil {
+				br = bufio.NewReader(bytes.NewReader(bytes.ReplaceAll(data, []byte{'\r'}, []byte{'\n'})))
+				endings = FFMac
+			}
+		}
+	}
 
 	la.Endings = endings
 
@@ -176,10 +189,15 @@ func (la *LineArray) Bytes() []byte {
 	for i, l := range la.lines {
 		b.Write(l.data)
 		if i != len(la.lines)-1 {
-			if la.Endings == FFDos {
+			switch la.Endings {
+			case FFDos:
 				b.WriteByte('\r')
+				b.WriteByte('\n')
+			case FFMac:
+				b.WriteByte('\r')
+			default:
+				b.WriteByte('\n')
 			}
-			b.WriteByte('\n')
 		}
 	}
 	return b.Bytes()
